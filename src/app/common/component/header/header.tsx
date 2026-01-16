@@ -2,11 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 
 export default function Header() {
-  const [open, setOpen] = useState(false);
-
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
@@ -28,18 +25,24 @@ export default function Header() {
           <NavLink label="HOME" active />
 
           {/* SERVICES DROPDOWN */}
-          <div
-            className="relative"
-            onMouseEnter={() => setOpen(true)}
-            onMouseLeave={() => setOpen(false)}
-          >
+          <div className="relative group">
             <button className="flex items-center gap-1 hover:text-teal-600">
               SERVICES
               <span className="text-xs">▾</span>
             </button>
 
-            {open && (
-              <div className="absolute left-0 top-full mt-3 w-64 rounded-lg bg-white shadow-lg border border-slate-200">
+            {/* DROPDOWN */}
+            <div
+              className="
+                invisible opacity-0
+                group-hover:visible group-hover:opacity-100
+                absolute left-0 top-full pt-2
+                w-64 rounded-lg bg-white
+                shadow-lg border border-slate-200
+                transition-all duration-200
+              "
+            >
+              <div className="rounded-lg overflow-hidden">
                 <DropdownItem label="Individual Therapy" />
                 <DropdownItem label="Couples Therapy" />
                 <DropdownItem label="Family Therapy" />
@@ -49,7 +52,7 @@ export default function Header() {
                 <DropdownItem label="Career Counselling" />
                 <DropdownItem label="Diagnostics" />
               </div>
-            )}
+            </div>
           </div>
 
           <NavLink label="ACADEMY" />
