@@ -106,14 +106,14 @@ export default function BookingCard() {
 			slidesPerView: 5,  
 		},
 	}}
-	className="flex-1 "
+	className="flex-1 py-4"
 >
 
 		{dates.map((date) => {
 			const { day, date: dayNumber } = getDayDate(date);
 
 			return (
-				<SwiperSlide key={date} >
+				<SwiperSlide key={date} className="py-4 px-2" >
 					<button
 						onClick={() => {
 							setSelectedDate(date);
