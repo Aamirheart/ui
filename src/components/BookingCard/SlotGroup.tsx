@@ -22,12 +22,14 @@ export default function SlotGroup({
           <button
             key={slot}
             onClick={() => onSelect(slot)}
-            className={`rounded-xl px-4 py-2 text-sm whitespace-nowrap border transition-all f-18-14-auto
-    ${
-      selected === slot
-        ? "bg-[#E5F7F9] border-[#00838F] text-[#00838F] font-semibold"
-        : "bg-white border-[#00838F] text-slate-500 hover:bg-[#E5F7F9]"
-    }`}
+            className={`rounded-xl px-4 py-2 whitespace-nowrap border 
+  transition-all duration-300 ease-out
+  active:scale-95
+  ${selected === slot
+    ? "bg-[#E5F7F9] border-[#00838F] text-[#00838F] font-semibold shadow-md scale-105"
+    : "bg-white border-[#00838F] text-slate-500 hover:bg-[#E5F7F9] hover:scale-105"
+  }`}
+	
           >
             {slot}
           </button>
