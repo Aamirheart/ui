@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import BookingCard from "@/components/BookingCard/BookingCard";
 import TherapistCard from "@/components/TherapistCard/TherapistCard";
 
