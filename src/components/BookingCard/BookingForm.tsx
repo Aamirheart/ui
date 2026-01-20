@@ -5,17 +5,22 @@ export default function BookingForm({
   date,
   slot,
   onBack,
+  defaultPhone = "",
+  defaultFirstName = "",
 }: {
   date: string;
   slot: string | null;
   onBack: () => void;
+  defaultPhone?: string;
+  defaultFirstName?: string;
 }) {
   const [form, setForm] = useState({
-    firstName: "",
+    firstName: defaultFirstName,
     lastName: "",
-    phone: "",
+    phone: defaultPhone,
     email: "",
   });
+
 
   const handleChange = (e: any) => {
     setForm({ ...form, [e.target.name]: e.target.value });

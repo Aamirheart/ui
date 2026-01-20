@@ -7,6 +7,8 @@ import { mockSlots } from "./mockSlots";
 import { useFetchSlots } from "@/hooks/useFetchSlots";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
+import { useSearchParams } from "next/navigation";
+
 import "./local.css";
 
 import "swiper/css";
@@ -18,11 +20,27 @@ const USE_MOCK = false;
 
 export default function BookingCard() {
 	// Always call hook (to respect hooks rules)
+	const searchParams = useSearchParams();
+
+// read params (with fallbacks)
+const therapistId =
+  searchParams.get("therapist_id") ||
+  searchParams.get("therapiest_id") || // fallback for typo
+  "48";
+
+const locationId = searchParams.get("location") || "2";
+const therapyForId = searchParams.get("therapy_for_id") || "13";
+
+// optional (for form prefilling later)
+const phoneFromUrl = searchParams.get("phone") || "";
+const fnameFromUrl = searchParams.get("fname") || "";
+
 	const api = useFetchSlots({
-		therapist_id: "48",
-		loc_id: "2",
-		service_id: "13",
-	});
+  therapist_id: therapistId,
+  loc_id: locationId,
+  service_id: therapyForId,
+});
+
 
 
 	// Decide which data source to use
@@ -208,13 +226,16 @@ export default function BookingCard() {
 			</div>
 		</>
 			)}
-				{step === "form" && (
-						<BookingForm
-							date={activeDate}
-							slot={activeSlot}
-							onBack={() => setStep("slot")}
-						/>
-					)}
+			{step === "form" && (
+  <BookingForm
+    date={activeDate}
+    slot={activeSlot}
+    onBack={() => setStep("slot")}
+    defaultPhone={phoneFromUrl}
+    defaultFirstName={fnameFromUrl}
+  />
+)}
+
 		</div>
 	);
 }
