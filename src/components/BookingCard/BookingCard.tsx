@@ -126,7 +126,7 @@ const fnameFromUrl = searchParams.get("fname") || "";
 				</div>
 				<Swiper
 					modules={[Navigation]}
-					spaceBetween={12}
+					// spaceBetween={12}
 					navigation={{
 						prevEl: ".swiper-button-prev-custom",
 						nextEl: ".swiper-button-next-custom",
