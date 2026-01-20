@@ -3,7 +3,7 @@ import TherapistCard from "@/components/TherapistCard/TherapistCard";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#f7fbfc]">
+    <main className=" bg-[#f7fbfc]">
       <div className="max-w-7xl mx-auto px-4 py-6">
 
         {/* Responsive layout */}

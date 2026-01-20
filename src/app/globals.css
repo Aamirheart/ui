@@ -122,3 +122,32 @@ font-size: clamp(1rem, 0.7222rem + 0.8889vw, 1.5rem);
 .animate-slot-fade {
   animation: slotFade 0.35s ease-out;
 }
+
+
+.f-18{
+  font-size: 18px;
+}
+
+.booking-btn-cus{
+      position: absolute;
+    left: 5%;
+    right: 5%;
+    bottom: 5%;
+}
+
+
+.input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  outline: none;
+}
+
+.login_inp {
+  width: auto;
+  padding: 14px 18px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  outline: none;
+}
