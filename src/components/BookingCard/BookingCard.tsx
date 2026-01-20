@@ -90,13 +90,15 @@ const fnameFromUrl = searchParams.get("fname") || "";
 	if (error) return <div className="text-red-500">Failed to load slots</div>;
 
 	const getDayDate = (dateStr: string) => {
-		const d = new Date(dateStr);
+  const d = new Date(dateStr);
 
-		return {
-			day: d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase(),
-			date: d.getDate(),
-		};
-	};
+  return {
+    day: d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase(),
+    date: d.getDate(),
+    month: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+  };
+};
+
 
 	return (
 		<div className="bg-white rounded-[51px] shadow-[0_0_12px_rgba(0,0,0,0.15)] p-6 space-y-5 relative">
@@ -107,7 +109,7 @@ const fnameFromUrl = searchParams.get("fname") || "";
 			<div className="flex justify-between items-center ">
 				<div className="swiper-button-prev-custom cursor-pointer">
 					<div className="md:block hidden">
-						<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+						<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 40 40" fill="none">
 							<path d="M37.8347 19.8026C37.8347 9.59296 29.5581 1.31641 19.3485 1.31641C9.13886 1.31641 0.862305 9.59296 0.862305 19.8026C0.862305 30.0122 9.13886 38.2888 19.3485 38.2888C29.5581 38.2888 37.8347 30.0122 37.8347 19.8026Z" fill="#E4E6EA" />
 							<path fill-rule="evenodd" clip-rule="evenodd" d="M12.3057 19.8021C12.3057 19.316 12.6998 18.9219 13.186 18.9219H25.5101C25.9963 18.9219 26.3904 19.316 26.3904 19.8021C26.3904 20.2883 25.9963 20.6825 25.5101 20.6825H13.186C12.6998 20.6825 12.3057 20.2883 12.3057 19.8021Z" fill="#043953" fill-opacity="0.88" />
 							<path fill-rule="evenodd" clip-rule="evenodd" d="M19.9704 13.0176C20.3143 13.3614 20.3143 13.9187 19.9704 14.2625L14.4309 19.8021L19.9704 25.3418C20.3143 25.6855 20.3143 26.2429 19.9704 26.5867C19.6268 26.9304 19.0694 26.9304 18.7255 26.5867L12.5635 20.4246C12.2197 20.0808 12.2197 19.5234 12.5635 19.1797L18.7255 13.0176C19.0694 12.6738 19.6268 12.6738 19.9704 13.0176Z" fill="#043953" fill-opacity="0.88" />
@@ -141,7 +143,8 @@ const fnameFromUrl = searchParams.get("fname") || "";
 				>
 
 					{dates.map((date) => {
-						const { day, date: dayNumber } = getDayDate(date);
+								const { day, date: dayNumber, month } = getDayDate(date);
+
 
 						return (
 							<SwiperSlide key={date} className="py-4 px-2" >
@@ -158,8 +161,14 @@ const fnameFromUrl = searchParams.get("fname") || "";
 										}`}
 
 								>
+
+									{/* <p className="f-18-16-auto leading-none">{day}</p>
+									<p className="f-18-16-auto font-semibold leading-tight">{dayNumber}</p> */}
 									<p className="f-18-16-auto leading-none">{day}</p>
-									<p className="f-18-16-auto font-semibold leading-tight">{dayNumber}</p>
+<p className="text-sm font-semibold leading-tight">
+  {month} {dayNumber}
+</p>
+
 								</button>
 							</SwiperSlide>
 						);
@@ -167,7 +176,7 @@ const fnameFromUrl = searchParams.get("fname") || "";
 				</Swiper>
 				<div className="swiper-button-next-custom cursor-pointer">
 					<div className="md:block hidden">
-						<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+						<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 40 40" fill="none">
 							<path d="M37.9387 19.8026C37.9387 9.59296 29.6621 1.31641 19.4525 1.31641C9.24286 1.31641 0.966309 9.59296 0.966309 19.8026C0.966309 30.0122 9.24286 38.2888 19.4525 38.2888C29.6621 38.2888 37.9387 30.0122 37.9387 19.8026Z" fill="#E4E6EA" />
 							<path fill-rule="evenodd" clip-rule="evenodd" d="M12.4097 19.8023C12.4097 19.3161 12.8038 18.9219 13.29 18.9219H25.6141C26.1003 18.9219 26.4944 19.3161 26.4944 19.8023C26.4944 20.2884 26.1003 20.6825 25.6141 20.6825H13.29C12.8038 20.6825 12.4097 20.2884 12.4097 19.8023Z" fill="#043953" fill-opacity="0.88" />
 							<path fill-rule="evenodd" clip-rule="evenodd" d="M18.8266 13.0176C19.1704 12.6738 19.7278 12.6738 20.0717 13.0176L26.2336 19.1796C26.5774 19.5235 26.5774 20.0809 26.2336 20.4246L20.0717 26.5866C19.7278 26.9305 19.1704 26.9305 18.8266 26.5866C18.4829 26.243 18.4829 25.6856 18.8266 25.3417L24.3663 19.8022L18.8266 14.2625C18.4829 13.9188 18.4829 13.3614 18.8266 13.0176Z" fill="#043953" fill-opacity="0.88" />

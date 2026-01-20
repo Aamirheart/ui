@@ -6,13 +6,22 @@ type SlotGroupProps = {
 };
 
 export default function SlotGroup({
-	title,
-	slots,
-	selected,
-	onSelect,
+  title,
+  slots,
+  selected,
+  onSelect,
 }: SlotGroupProps) {
-	if (!slots?.length) return null;
+  if (!slots?.length) return null;
 
+  const formatTo12Hour = (time: string) => {
+    const [hourStr, minute] = time.split(":");
+    let hour = parseInt(hourStr, 10);
+
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+
+    return `${hour.toString().padStart(2, "0")}:${minute} ${ampm}`;
+  };
 	return (
 		<div>
 			<p className="font-semibold text-slate-700 mb-2">{title}</p>
@@ -32,7 +41,7 @@ export default function SlotGroup({
 							}`}
 
 					>
-						{slot}
+						  {formatTo12Hour(slot)}
 					</button>
 				))}
 			</div>
