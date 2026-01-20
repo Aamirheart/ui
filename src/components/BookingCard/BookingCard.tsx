@@ -51,7 +51,12 @@ export default function BookingCard() {
 	}, [slots, activeDate]);
 
 	const grouped = useMemo(() => {
-		const groups = { morning: [] as string[], afternoon: [], evening: [] };
+		const groups = {
+  morning: [] as string[],
+  afternoon: [] as string[],
+  evening: [] as string[],
+};
+
 
 		filteredSlots.forEach((time) => {
 			const hour = parseInt(time.split(":")[0]);
