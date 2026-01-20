@@ -9,7 +9,9 @@ export default function Home() {
         {/* Responsive layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           <TherapistCard />
-          <BookingCard />
+          <Suspense fallback={<div />}>
+      <BookingCard />
+    </Suspense>
         </div>
 
       </div>
