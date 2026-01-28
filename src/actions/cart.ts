@@ -4,7 +4,6 @@ import { sdk } from "@/lib/medusa"
 import { revalidateTag } from "next/cache"
 
 export async function retrieveCart(cartId: string) {
-  // Fetch cart with all necessary relations for the summary
   return sdk.store.cart.retrieve(cartId, {
     fields: "+items.metadata,+payment_collection.payment_sessions,+promotions"
   })
@@ -21,14 +20,8 @@ export async function applyPromotion(cartId: string, code: string) {
 }
 
 export async function initPaymentSession(cartId: string, providerId: string) {
-  try {
-    const res = await sdk.store.payment.initiatePaymentSession(cartId, {
+  // This is for selecting a specific one if needed, but Step 1 usually handles init
+  return sdk.store.paymentCollection.managePaymentSession(cartId, {
       provider_id: providerId
-    })
-    revalidateTag("cart")
-    return res
-  } catch (error: any) {
-    console.error("Payment Init Error:", error)
-    throw new Error(error.message)
-  }
+  })
 }

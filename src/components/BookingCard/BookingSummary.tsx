@@ -7,15 +7,12 @@ import { retrieveCart, applyPromotion, initPaymentSession } from "@/actions/cart
 import { completeBookingOrder } from "@/actions/booking";
 import { Loader2, Tag, Calendar, MapPin, User, CheckCircle, TicketPercent } from "lucide-react";
 
-// Format helper
 const formatPrice = (amount: number, currency: string) => {
   if (!currency) return "";
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: currency.toUpperCase(),
   }).format(amount); 
-  // NOTE: If your backend sends 100000 for ₹1000, ensure you divide by 100 here if needed:
-  // .format(amount / 100); 
 };
 
 export default function BookingSummary({ cartId, onBack }: { cartId: string, onBack: () => void }) {
@@ -33,13 +30,11 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
 
   const { Razorpay } = useRazorpay();
 
-  // 1. Fetch Cart Data
   const refreshCart = async () => {
     try {
       const { cart: fetchedCart } = await retrieveCart(cartId);
       setCart(fetchedCart);
       
-      // Auto-select pending provider
       const activeSession = fetchedCart.payment_collection?.payment_sessions?.find((s: any) => s.status === "pending");
       if (activeSession) {
         setSelectedProvider(activeSession.provider_id);
@@ -55,7 +50,6 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
     refreshCart();
   }, [cartId]);
 
-  // 2. Apply Coupon
   const handleApplyCoupon = async () => {
     if (!promoCode) return;
     setIsApplying(true);
@@ -71,7 +65,6 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
     setIsApplying(false);
   };
 
-  // 3. Select Payment Method
   const selectProvider = async (providerId: string) => {
     if (selectedProvider === providerId) return;
     setLoading(true);
@@ -86,7 +79,6 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
     }
   };
 
-  // 4. Handle Payment
   const handlePayment = async () => {
     if (!cart || !selectedProvider) return;
     setIsProcessing(true);
@@ -104,11 +96,16 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
           currency: cart.currency_code.toUpperCase(),
           name: "Heart It Out",
           description: "Therapy Session",
-          order_id: session.data.id, // Razorpay Order ID
+          order_id: session.data.id,
           handler: async () => {
-            await completeBookingOrder(cart.id);
-            alert("Booking Confirmed! ✅");
-            window.location.href = "/booking/success";
+            // 1. Complete Order on Backend
+            const result = await completeBookingOrder(cart.id);
+            // 2. Redirect to Success Page with Order ID
+            if(result.type === "order") {
+                window.location.href = `/booking/success?order_id=${result.order.id}`;
+            } else {
+                alert("Payment captured but order incomplete. Please contact support.");
+            }
           },
           prefill: {
             name: `${cart.shipping_address?.first_name}`,
@@ -126,6 +123,7 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
         const cashfree = await load({ mode: "sandbox" }); 
         cashfree.checkout({
           paymentSessionId: session.data.payment_session_id,
+          // Redirect sends cart_id, Success page will handle completion
           returnUrl: `${window.location.origin}/booking/success?cart_id=${cart.id}`,
         });
       }
@@ -154,7 +152,6 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
     <div className="animate-slot-fade space-y-5">
       <h2 className="text-center font-bold text-lg text-[#043953]">Review & Pay</h2>
 
-      {/* 1. Details Card */}
       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm">
         <div className="flex items-start gap-3 border-b border-dashed border-slate-300 pb-3 mb-3">
             <div className="bg-white p-2 rounded-lg shadow-sm text-[#01818C]">
@@ -173,7 +170,6 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
         </div>
       </div>
 
-      {/* 2. Coupon Code */}
       <div>
         <div className="flex gap-2">
             <div className="relative flex-1">
@@ -206,7 +202,6 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
         )}
       </div>
 
-      {/* 3. Payment Methods */}
       <div>
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Payment Method</h3>
         <div className="space-y-2">
@@ -230,7 +225,6 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
         </div>
       </div>
 
-      {/* 4. Total & Pay */}
       <div className="border-t pt-4">
         <div className="flex justify-between items-end mb-4">
             <span className="text-sm text-slate-500">Total Amount</span>
