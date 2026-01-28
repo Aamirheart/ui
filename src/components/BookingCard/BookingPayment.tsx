@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { load } from "@cashfreepayments/cashfree-js";
 import { useRazorpay } from "react-razorpay";
 import { sdk } from "@/lib/medusa";
-import { completeBookingOrder, getCart } from "@/actions/booking";
+import { completeBookingOrder } from "@/actions/booking";
+import { retrieveCart } from "@/actions/cart";
 
 export default function BookingPayment({ cartId, onBack, onSuccess }: any) {
   const [cart, setCart] = useState<any>(null);
@@ -12,15 +13,23 @@ export default function BookingPayment({ cartId, onBack, onSuccess }: any) {
   const { Razorpay } = useRazorpay();
 
   // Load Cart Data
-  useEffect(() => {
-    async function loadData() {
-      const { cart } = await getCart(cartId);
-      setCart(cart);
+// src/components/BookingCard/BookingPayment.tsx
+
+useEffect(() => {
+  async function loadData() {
+    try {
+      // Use the correct retrieval function that has the expanded fields
+      const data = await retrieveCart(cartId);
+      // retrieveCart returns res.json() which in Medusa is usually { cart: ... }
+      setCart(data.cart); 
+    } catch (error) {
+      console.error("Failed to load cart for payment:", error);
+    } finally {
       setLoading(false);
     }
-    loadData();
-  }, [cartId]);
-
+  }
+  loadData();
+}, [cartId]);
   // Handle Cashfree
   const handleCashfree = async () => {
     const session = cart.payment_collection.payment_sessions.find((s: any) => s.provider_id === "cashfree");
