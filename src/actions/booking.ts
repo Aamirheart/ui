@@ -2,7 +2,7 @@
 
 import { sdk } from "@/lib/medusa"
 
-// 1. Create a Cart with Therapist Metadata
+// 1. Create a Cart with Therapist Metadata (Unchanged)
 export async function createBookingCart(data: { 
   variantId: string; 
   countryCode: string; 
@@ -11,7 +11,6 @@ export async function createBookingCart(data: {
 }) {
   const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
   
-  // Hit your custom backend endpoint
   const res = await fetch(`${backendUrl}/store/custom/add-booking`, {
     method: "POST",
     headers: {
@@ -28,12 +27,15 @@ export async function createBookingCart(data: {
     cache: "no-store",
   })
 
-  if (!res.ok) throw new Error("Failed to create booking cart")
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(err.message || "Failed to create booking cart")
+  }
   
-  return await res.json() // Returns { cart_id: "..." }
+  return await res.json() 
 }
 
-// 2. Update Customer Details
+// 2. Update Customer Details (Unchanged)
 export async function updateBookingCustomer(cartId: string, customer: any) {
   return sdk.store.cart.update(cartId, {
     email: customer.email,
@@ -57,21 +59,22 @@ export async function updateBookingCustomer(cartId: string, customer: any) {
   })
 }
 
-// 3. Initialize Payment Sessions
+// 3. Initialize Payment Collection (FIXED)
 export async function initPaymentSessions(cartId: string) {
-  return sdk.store.payment.initiatePaymentSession(cartId, {
-     provider_id: "cashfree" // Initialize mostly used one, or handle generic
+  // 👇 FIX: Correct Namespace and Method for V2
+  return sdk.store.paymentCollection.create({
+    cart_id: cartId,
   })
 }
 
-// 4. Retrieve Full Cart
+// 4. Retrieve Full Cart (Unchanged)
 export async function getCart(cartId: string) {
   return sdk.store.cart.retrieve(cartId, {
-    fields: "*payment_collection.payment_sessions,*items,*region"
+    fields: "+payment_collection.payment_sessions,*items,*region"
   })
 }
 
-// 5. Complete Order
+// 5. Complete Order (Unchanged)
 export async function completeBookingOrder(cartId: string) {
   return sdk.store.cart.complete(cartId)
 }
