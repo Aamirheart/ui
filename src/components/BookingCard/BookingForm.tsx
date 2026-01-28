@@ -148,7 +148,7 @@ export default function BookingForm({
     try {
       // 1. Create Cart
       // Note: You need the Product Variant ID from Medusa Admin for "Therapy Session"
-      const VARIANT_ID = "variant_123..."; 
+      const VARIANT_ID = "variant_01KEBG7JCDWA5WRE4YD7XPWK11"; 
       
       const { cart_id } = await createBookingCart({
         variantId: VARIANT_ID, 
