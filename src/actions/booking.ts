@@ -82,6 +82,49 @@ export async function initPaymentSessions(cartId: string) {
 }
 
 // 4. Complete Order (Retain this)
+
+import { revalidateTag } from "next/cache"
+
 export async function completeBookingOrder(cartId: string) {
-  return sdk.store.cart.complete(cartId)
+  try {
+    // 1. Fetch available shipping options for this specific cart
+    const { shipping_options } = await sdk.store.fulfillment.listCartOptions({
+      cart_id: cartId
+    });
+
+    if (!shipping_options || shipping_options.length === 0) {
+      throw new Error("No shipping options found. Please create at least one 'Manual' shipping option in Medusa Admin.");
+    }
+
+    /** * 2. Map through required shipping profiles.
+     * To satisfy the error "shipping profiles not satisfied", we ensure 
+     * that for every unique shipping profile required by the items, 
+     * a method is added. 
+     */
+    const uniqueProfileIds = Array.from(new Set(shipping_options.map(opt => opt.service_zone_id)));
+
+    for (const profileId of uniqueProfileIds) {
+      const option = shipping_options.find(opt => opt.service_zone_id === profileId) || shipping_options[0];
+      
+      await sdk.store.cart.addShippingMethod(cartId, {
+        option_id: option.id,
+      });
+    }
+
+    // 3. Complete the cart to create the order
+    const response = await sdk.store.cart.complete(cartId);
+    
+    // In Medusa V2, successful completion returns { type: "order", order: ... }
+    if (response.type === "order") {
+      console.log("✅ Order Successful:", response.order.id);
+      console.log("Order Total:", response.order.total);
+      console.log("Customer Email:", response.order.email);
+    }
+
+    revalidateTag("cart");
+    return response;
+  } catch (error: any) {
+    console.error("Order Completion Error:", error.message);
+    throw error;
+  }
 }
