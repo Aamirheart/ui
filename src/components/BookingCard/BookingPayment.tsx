@@ -24,36 +24,35 @@ export default function BookingPayment({ cartId, onBack, onSuccess }: any) {
     loadData();
   }, [cartId]);
 
-  const handlePayment = async (providerId: string) => {
+const handlePayment = async (providerId: string) => {
     try {
-      // 1. Initialize the session for the specific provider
+      // 1. Initialize the session
       await initPaymentSession(cartId, providerId);
       
-      // 2. Refresh cart to get session data
+      // 2. Get the session data (needed for the gateway)
       const refreshedData = await retrieveCart(cartId);
       const session = refreshedData.cart.payment_collection.payment_sessions.find(
         (s: any) => s.provider_id === providerId
       );
 
       if (!session) {
-        throw new Error(`${providerId} session not found after initialization`);
+        throw new Error(`${providerId} session not found`);
       }
 
-      // 3. Provider-specific logic
+      // 3. Redirect to Gateway
       if (providerId === "cashfree") {
         const cashfree = await load({ mode: "sandbox" });
-        cashfree.checkout({
+        // After this call, the user LEAVES your app. 
+        // They will come back to the returnUrl after paying.
+        await cashfree.checkout({
           paymentSessionId: session.data.payment_session_id,
           returnUrl: `${window.location.origin}/booking/success?cart_id=${cartId}`,
         });
       } 
-      // Add other provider handlers here (e.g., stripe) if they are added to backend
-      
     } catch (err) {
-      alert(`Payment initialization failed: ${err}`);
+      alert(`Payment failed: ${err}`);
     }
   };
-
   if (loading) return <div className="p-8 text-center">Loading payment options...</div>;
   if (!cart) return <div className="p-8 text-center">Cart not found.</div>;
 
