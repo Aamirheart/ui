@@ -30,36 +30,35 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
 
   const { Razorpay } = useRazorpay();
 
- const refreshCart = async () => {
-  try {
-    const data = await retrieveCart(cartId);
-    // Support both { cart: ... } and direct cart object responses
-    const fetchedCart = data.cart || data; 
-    setCart(fetchedCart);
-    
-    const collection = fetchedCart.payment_collection;
-    
-    // 1. Check if we have sessions
-    if (collection && collection.payment_sessions?.length > 0) {
-      const activeSession = collection.payment_sessions.find((s: any) => s.status === "pending");
-      if (activeSession) {
-        setSelectedProvider(activeSession.provider_id);
+  const refreshCart = async () => {
+    try {
+      const data = await retrieveCart(cartId);
+      const fetchedCart = data.cart || data; 
+      setCart(fetchedCart);
+      
+      const collection = fetchedCart.payment_collection;
+      
+      // 1. Check if we have sessions
+      if (collection && collection.payment_sessions?.length > 0) {
+        const activeSession = collection.payment_sessions.find((s: any) => s.status === "pending");
+        if (activeSession) {
+          setSelectedProvider(activeSession.provider_id);
+        }
+      } 
+      // 2. If collection exists but NO sessions, we MUST initialize them
+      else if (collection && (!collection.payment_sessions || collection.payment_sessions.length === 0)) {
+         console.log("Collection exists but no sessions found. Initializing...");
+         // ✅ FIX: Use the correct provider ID
+         await initPaymentSession(cartId, "pp_razorpay_razorpay");
+         const { cart: updatedCart } = await retrieveCart(cartId);
+         setCart(updatedCart);
       }
-    } 
-    // 2. If collection exists but NO sessions, we MUST initialize them
-    else if (collection && (!collection.payment_sessions || collection.payment_sessions.length === 0)) {
-       console.log("Collection exists but no sessions found. Initializing...");
-       // This triggers the backend to create sessions for available providers
-       await initPaymentSession(cartId, "razorpay"); // Initialize at least one to wake up the collection
-       const { cart: updatedCart } = await retrieveCart(cartId);
-       setCart(updatedCart);
+    } catch (e) {
+      console.error("Failed to load cart", e);
+    } finally {
+      setLoading(false);
     }
-  } catch (e) {
-    console.error("Failed to load cart", e);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     refreshCart();
@@ -105,8 +104,8 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
       
       if (!session) throw new Error("Payment session invalid. Please refresh.");
 
-      // --- RAZORPAY ---
-      if (selectedProvider === "razorpay") {
+      // ✅ FIX: Check using .includes() to handle prefixed IDs
+      if (selectedProvider.includes('razorpay')) {
         const options = {
           key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
           amount: session.amount,
@@ -115,9 +114,7 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
           description: "Therapy Session",
           order_id: session.data.id,
           handler: async () => {
-            // 1. Complete Order on Backend
             const result = await completeBookingOrder(cart.id);
-            // 2. Redirect to Success Page with Order ID
             if(result.type === "order") {
                 window.location.href = `/booking/success?order_id=${result.order.id}`;
             } else {
@@ -136,11 +133,10 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
       } 
       
       // --- CASHFREE ---
-      else if (selectedProvider === "cashfree") {
+      else if (selectedProvider.includes('cashfree')) {
         const cashfree = await load({ mode: "sandbox" }); 
         cashfree.checkout({
           paymentSessionId: session.data.payment_session_id,
-          // Redirect sends cart_id, Success page will handle completion
           returnUrl: `${window.location.origin}/booking/success?cart_id=${cart.id}`,
         });
       }
@@ -225,26 +221,24 @@ export default function BookingSummary({ cartId, onBack }: { cartId: string, onB
             {sessions.length === 0 && <p className="text-xs text-red-400">No payment options available.</p>}
             
            {sessions.map((s: any) => (
-    <div 
-        key={s.provider_id}
-        // This now passes the EXACT ID the backend sent (e.g., 'pp_razorpay_razorpay')
-        onClick={() => selectProvider(s.provider_id)} 
-        className={`p-3 rounded-xl border cursor-pointer flex items-center justify-between transition-all
-            ${selectedProvider === s.provider_id 
-                ? "border-[#01818C] bg-[#E5F7F9] ring-1 ring-[#01818C]" 
-                : "border-gray-200 hover:border-gray-300 bg-white"}`}
-    >
-        <span className="text-sm font-medium capitalize text-slate-700">
-            {/* Use .includes to catch prefixed IDs like 'pp_razorpay_razorpay' */}
-            {s.provider_id.includes('razorpay') 
-                ? 'Razorpay (UPI / Card)' 
-                : s.provider_id.includes('cashfree') 
-                    ? 'Cashfree Payments' 
-                    : s.provider_id}
-        </span>
-        {selectedProvider === s.provider_id && <CheckCircle size={16} className="text-[#01818C]"/>}
-    </div>
-))}
+            <div 
+                key={s.provider_id}
+                onClick={() => selectProvider(s.provider_id)} 
+                className={`p-3 rounded-xl border cursor-pointer flex items-center justify-between transition-all
+                    ${selectedProvider === s.provider_id 
+                        ? "border-[#01818C] bg-[#E5F7F9] ring-1 ring-[#01818C]" 
+                        : "border-gray-200 hover:border-gray-300 bg-white"}`}
+            >
+                <span className="text-sm font-medium capitalize text-slate-700">
+                    {s.provider_id.includes('razorpay') 
+                        ? 'Razorpay (UPI / Card)' 
+                        : s.provider_id.includes('cashfree') 
+                            ? 'Cashfree Payments' 
+                            : s.provider_id}
+                </span>
+                {selectedProvider === s.provider_id && <CheckCircle size={16} className="text-[#01818C]"/>}
+            </div>
+        ))}
         </div>
       </div>
 

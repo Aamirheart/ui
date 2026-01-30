@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { load } from "@cashfreepayments/cashfree-js";
-import { useRazorpay } from "react-razorpay";
 import { sdk } from "@/lib/medusa";
 import { completeBookingOrder } from "@/actions/booking";
 import { initPaymentSession, retrieveCart } from "@/actions/cart";
@@ -10,73 +9,57 @@ import { initPaymentSession, retrieveCart } from "@/actions/cart";
 export default function BookingPayment({ cartId, onBack, onSuccess }: any) {
   const [cart, setCart] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { Razorpay } = useRazorpay();
 
-  // Load Cart Data
-// src/components/BookingCard/BookingPayment.tsx
-
-useEffect(() => {
-  async function loadData() {
-    try {
-      // Use the correct retrieval function that has the expanded fields
-      const data = await retrieveCart(cartId);
-      // retrieveCart returns res.json() which in Medusa is usually { cart: ... }
-      setCart(data.cart); 
-    } catch (error) {
-      console.error("Failed to load cart for payment:", error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await retrieveCart(cartId);
+        setCart(data.cart);
+      } catch (error) {
+        console.error("Failed to load cart for payment:", error);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
-  loadData();
-}, [cartId]);
-  // Handle Cashfree
-  const handleCashfree = async () => {
-    const session = cart.payment_collection.payment_sessions.find((s: any) => s.provider_id === "cashfree");
-    if (!session) return alert("Cashfree session not found");
+    loadData();
+  }, [cartId]);
 
-    const cashfree = await load({ mode: "sandbox" }); // Change to production for live
-    cashfree.checkout({
-      paymentSessionId: session.data.payment_session_id,
-      returnUrl: `${window.location.origin}/booking/success?cart_id=${cartId}`,
-    });
+  const handlePayment = async (providerId: string) => {
+    try {
+      // 1. Initialize the session for the specific provider
+      await initPaymentSession(cartId, providerId);
+      
+      // 2. Refresh cart to get session data
+      const refreshedData = await retrieveCart(cartId);
+      const session = refreshedData.cart.payment_collection.payment_sessions.find(
+        (s: any) => s.provider_id === providerId
+      );
+
+      if (!session) {
+        throw new Error(`${providerId} session not found after initialization`);
+      }
+
+      // 3. Provider-specific logic
+      if (providerId === "cashfree") {
+        const cashfree = await load({ mode: "sandbox" });
+        cashfree.checkout({
+          paymentSessionId: session.data.payment_session_id,
+          returnUrl: `${window.location.origin}/booking/success?cart_id=${cartId}`,
+        });
+      } 
+      // Add other provider handlers here (e.g., stripe) if they are added to backend
+      
+    } catch (err) {
+      alert(`Payment initialization failed: ${err}`);
+    }
   };
 
-  // Handle Razorpay
- // src/components/BookingCard/BookingPayment.tsx
-
-
-const handleRazorpay = async () => {
-  try {
-    // Force initialize session on backend via our action
-    const sessionResponse = await initPaymentSession(cartId, "razorpay");
-    
-    // Refresh cart to get the session data (including Razorpay Order ID)
-    const refreshedData = await retrieveCart(cartId);
-    const session = refreshedData.cart.payment_collection.payment_sessions.find(
-      (s: any) => s.provider_id === "razorpay"
-    );
-
-    const options = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY,
-      amount: session.amount,
-      currency: "INR",
-      order_id: session.data.id, // This comes from your Razorpay provider's createSession method
-      handler: async (response: any) => {
-        await completeBookingOrder(cart.id);
-        onSuccess(response);
-      },
-      // ... prefill
-    };
-
-    const rzp = new (window as any).Razorpay(options);
-    rzp.open();
-  } catch (err) {
-    alert("Could not initialize Razorpay: " + err);
-  }
-};
-
   if (loading) return <div className="p-8 text-center">Loading payment options...</div>;
+  if (!cart) return <div className="p-8 text-center">Cart not found.</div>;
+
+  // Identify available providers from the backend
+  // Note: Your backend log shows 'cashfree' is resolving correctly.
+  const availableSessions = cart.payment_collection?.payment_sessions || [];
 
   return (
     <div className="space-y-6 animate-slot-fade p-2">
@@ -94,19 +77,22 @@ const handleRazorpay = async () => {
       </div>
 
       <div className="space-y-3">
-        <button 
-            onClick={handleRazorpay}
-            className="w-full bg-[#3399cc] text-white py-3 rounded-xl font-semibold shadow-md hover:opacity-90 transition-all"
-        >
-          Pay with Razorpay
-        </button>
-        
-        <button 
-            onClick={handleCashfree}
-            className="w-full bg-[#7D38DC] text-white py-3 rounded-xl font-semibold shadow-md hover:opacity-90 transition-all"
-        >
-          Pay with Cashfree
-        </button>
+        {/* Only render buttons for providers that the backend successfully initialized */}
+        {availableSessions.map((session: any) => (
+          <button 
+            key={session.id}
+            onClick={() => handlePayment(session.provider_id)}
+            className={`w-full text-white py-3 rounded-xl font-semibold shadow-md hover:opacity-90 transition-all ${
+              session.provider_id === 'cashfree' ? 'bg-[#7D38DC]' : 'bg-slate-700'
+            }`}
+          >
+            Pay with {session.provider_id.charAt(0).toUpperCase() + session.provider_id.slice(1)}
+          </button>
+        ))}
+
+        {availableSessions.length === 0 && (
+          <p className="text-center text-red-500 text-sm">No payment methods available.</p>
+        )}
       </div>
 
       <button onClick={onBack} className="w-full text-slate-400 text-sm mt-4 hover:text-slate-600">
