@@ -5,7 +5,7 @@ import { load } from "@cashfreepayments/cashfree-js";
 import { useRazorpay } from "react-razorpay";
 import { sdk } from "@/lib/medusa";
 import { completeBookingOrder } from "@/actions/booking";
-import { retrieveCart } from "@/actions/cart";
+import { initPaymentSession, retrieveCart } from "@/actions/cart";
 
 export default function BookingPayment({ cartId, onBack, onSuccess }: any) {
   const [cart, setCart] = useState<any>(null);
@@ -43,37 +43,38 @@ useEffect(() => {
   };
 
   // Handle Razorpay
-  const handleRazorpay = async () => {
-    // 1. Init Razorpay Session on Backend if not present
-    let session = cart.payment_collection.payment_sessions.find((s: any) => s.provider_id === "razorpay");
+ // src/components/BookingCard/BookingPayment.tsx
+
+
+const handleRazorpay = async () => {
+  try {
+    // Force initialize session on backend via our action
+    const sessionResponse = await initPaymentSession(cartId, "razorpay");
     
-    if (!session) {
-      // Create session specifically for Razorpay if it wasn't the default
-      await sdk.store.payment.initiatePaymentSession(cart.id, { provider_id: "razorpay" });
-      const refreshed = await getCart(cartId);
-      session = refreshed.cart.payment_collection.payment_sessions.find((s: any) => s.provider_id === "razorpay");
-    }
+    // Refresh cart to get the session data (including Razorpay Order ID)
+    const refreshedData = await retrieveCart(cartId);
+    const session = refreshedData.cart.payment_collection.payment_sessions.find(
+      (s: any) => s.provider_id === "razorpay"
+    );
 
     const options = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY || "rzp_test_...",
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY,
       amount: session.amount,
       currency: "INR",
-      name: "Heart It Out",
-      description: "Therapy Session",
-      order_id: session.data.id, // Razorpay Order ID from backend
+      order_id: session.data.id, // This comes from your Razorpay provider's createSession method
       handler: async (response: any) => {
         await completeBookingOrder(cart.id);
         onSuccess(response);
       },
-      prefill: {
-        email: cart.email,
-        contact: cart.shipping_address?.phone,
-      },
+      // ... prefill
     };
 
-    const rzp = new Razorpay(options);
+    const rzp = new (window as any).Razorpay(options);
     rzp.open();
-  };
+  } catch (err) {
+    alert("Could not initialize Razorpay: " + err);
+  }
+};
 
   if (loading) return <div className="p-8 text-center">Loading payment options...</div>;
 

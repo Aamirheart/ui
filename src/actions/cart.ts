@@ -36,39 +36,34 @@ export async function applyPromotion(cartId: string, code: string) {
 }
 
 // src/actions/cart.ts
-// src/actions/cart.ts
-
 export async function initPaymentSession(cartId: string, providerId: string) {
   const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
   
-  // 1. Get the cart to find the actual payment_collection.id
   const cartData = await retrieveCart(cartId);
   const cart = cartData.cart || cartData;
   const paymentCollectionId = cart.payment_collection?.id;
 
   if (!paymentCollectionId) {
-    throw new Error("No payment collection found for this cart. Ensure initPaymentSessions(cartId) was called first.");
+    throw new Error("DEBUG: No payment collection found. Check if the cart has an address and email.");
   }
 
-  // 2. Use the paymentCollectionId in the URL, not the cartId
   const res = await fetch(`${backendUrl}/store/payment-collections/${paymentCollectionId}/payment-sessions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
     },
-    body: JSON.stringify({ 
-      provider_id: providerId 
-      // Note: Some v2 setups also require 'amount' here if not already set
-    }),
+    body: JSON.stringify({ provider_id: providerId }),
     cache: "no-store",
-  })
+  });
 
   if (!res.ok) {
-    const errorText = await res.text();
-    console.error("Backend Error Details:", errorText);
-    throw new Error(`Failed to initialize payment session: ${errorText}`);
+    const errorData = await res.json().catch(() => ({ message: "Unknown Error" }));
+    console.error("DEBUG: Backend Error Full Body:", errorData);
+    
+    // This will throw the specific Medusa error message (e.g., "Could not resolve razorpay")
+    throw new Error(`Backend Error (${res.status}): ${errorData.message || JSON.stringify(errorData)}`);
   }
 
-  return await res.json()
+  return await res.json();
 }
