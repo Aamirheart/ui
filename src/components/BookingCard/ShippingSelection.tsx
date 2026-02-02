@@ -38,6 +38,8 @@ export default function ShippingSelection({ cartId, onSuccess, onBack }: any) {
     }
   };
 
+
+  
   if (loading) return <div className="p-8 text-center">Loading options...</div>;
 
   return (

@@ -119,8 +119,7 @@ export async function getShippingOptions(cartId: string) {
  * 6. Add Shipping Method to cart
  */
 export async function addShippingMethod(cartId: string, optionId: string) {
-  const res = await sdk.store.cart.addShippingMethod(cartId, {
+  return await sdk.store.cart.addShippingMethod(cartId, {
     option_id: optionId,
   });
-  return res;
 }
